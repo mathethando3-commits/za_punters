@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZA Punters | Punters Hub</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { background:#121212; color:#fff; font-family: Arial, sans-serif; margin:0; padding:0; }
+.punters-hub { max-width:1100px; margin:50px auto; padding:0 20px; text-align:center; }
+h1 { margin-bottom:10px; }
+.buttons { display:flex; justify-content:center; gap:20px; margin-bottom:30px; flex-wrap:wrap; }
+.button { background:#00c853; color:#fff; padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition: transform 0.2s ease, background-color 0.2s; text-decoration:none; }
+.button:hover { background:#00e676; transform:scale(1.05); }
+#codeFormContainer { display:none; margin-bottom:30px; }
+#codeForm { display:flex; flex-direction:column; gap:10px; max-width:400px; margin:0 auto; }
+#codeForm input, #codeForm select { padding:10px; border-radius:6px; border:none; }
+#codeForm button { margin-top:10px; }
+.feed { display:grid; grid-template-columns:1fr; gap:20px; margin-bottom:30px; }
+.feed-title { font-size:1.5rem; margin-bottom:10px; color:#00c853; }
+.punter-post { background:#1a1a1a; padding:15px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.4); transition:transform 0.3s ease; }
+.punter-post:hover { transform:scale(1.03); }
+.punter-post img { width:100%; border-radius:8px; margin-top:10px; }
+@media(min-width:768px){ .feed { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+      <img src="images/Logo.png" class="logo" alt="ZA Punters Logo">
+      
+    <div class="menu-toggle" id="menu-toggle">
+      ☰
+    </div>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="tips.html">Betting Tips</a></li>
+        <li><a href="news.html">Sports News</a></li>
+        <li><a href="quiz.html">Quiz</a></li>
+         <li><a href="punters.html">Punters Hub</a><li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+<section class="punters-hub">
+  <h1>Punters Hub 🏆</h1>
+  <p>Share your betting codes and wins so that others may see!</p>
+
+  <div class="buttons">
+    <button id="showFormBtn" class="button">Share Your Code</button>
+    <a href="https://wa.me/27635926180" target="_blank" class="button">Flaunt Your Win</a>
+  </div>
+
+  <!-- Hidden form -->
+  <div id="codeFormContainer">
+    <form id="codeForm">
+      <label>Platform:</label>
+      <select name="platform" required>
+        <option value="">Select Platform</option>
+        <option value="Betway">Betway</option>
+        <option value="Hollywood Bets">Hollywood Bets</option>
+      </select>
+
+      <label>Username:</label>
+      <input type="text" name="username" placeholder="Enter your name" required>
+
+      <label>Betting Code:</label>
+      <input type="text" name="code" placeholder="Enter code" required>
+
+      <button type="submit" class="button">Send Betting Code</button>
+    </form>
+    <p id="codeMsg"></p>
+  </div>
+  <h1>Codes & Wins Feed</h1>
+  <!-- Betting Codes Feed -->
+  <div class="feed">
+    <div class="feed-title"></div>
+    <div id="codesFeed"></div>
+   
+  </div>
+
+  <!-- Wins Feed -->
+  <div class="feed">
+    <div class="feed-title"></div>
+    <div id="winsFeed">
+      <!-- Manually add wins here -->
+      <div class="punter-post">
+        <h3>Kagiso L.</h3>
+        <p>Won R500!</p>
+        <img src="images/bet.jpg" alt="Win screenshot">
+      </div>
+      <div class="punter-post">
+        <h3>Linda Z.</h3>
+        <p>Won R350!</p>
+        <img src="images/bet.jpg" alt="Win screenshot">
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Toggle form visibility
+const showFormBtn = document.getElementById('showFormBtn');
+const codeFormContainer = document.getElementById('codeFormContainer');
+showFormBtn.addEventListener('click', () => {
+  codeFormContainer.style.display = codeFormContainer.style.display === 'none' ? 'block' : 'none';
+});
+
+// Submit betting codes to Google Sheets
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyfptKfGk3N089Ii7iLfj01_dbt583wC-Zt1TZglThysI3a5Yu-wH9NrR6RM6TJtB_XsQ/exec';
+const codeForm = document.getElementById('codeForm');
+const codeMsg = document.getElementById('codeMsg');
+const codesFeed = document.getElementById('codesFeed');
+
+codeForm.addEventListener('submit', e => {
+  e.preventDefault();
+  fetch(scriptURL, { method:'POST', body:new FormData(codeForm)})
+    .then(response => {
+      codeMsg.innerHTML = "✅ Betting code submitted! It will appear in the feed shortly.";
+      setTimeout(()=> codeMsg.innerHTML="",4000);
+      codeForm.reset();
+      loadCodes();
+    })
+    .catch(err => {
+      codeMsg.innerHTML = "❌ Error submitting code. Try again.";
+    });
+});
+
+// Load codes from Google Sheets
+function loadCodes(){
+  fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+      codesFeed.innerHTML = ''; // clear feed
+      const now = new Date();
+      data.forEach(post => {
+        const timestamp = new Date(post.timestamp);
+        const diffHours = (now - timestamp)/1000/3600;
+        if(diffHours <= 24){
+          const div = document.createElement('div');
+          div.classList.add('punter-post');
+          div.innerHTML = `<h3>${post.username} (${post.platform})</h3>
+                           <p>Betting Code: ${post.code}</p>`;
+          codesFeed.appendChild(div);
+        }
+      });
+    })
+    .catch(err => console.error('Error loading codes:', err));
+}
+
+// Load codes on page load
+loadCodes();
+</script>
+<footer>
+    <p>© 2025 ZA Punters. All rights reserved.</p>
+  </footer>
+<script src="menu.js"></script>
+</body>
+</html>
